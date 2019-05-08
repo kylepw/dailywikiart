@@ -14,7 +14,8 @@ def main():
     auth.set_access_token(ACCESS_TOKEN, ACCESS_SECRET)
     api = tweepy.API(auth)
 
-    api.update_status('hey')
+    user = api.me()
+    print(user.name)
 
 if __name__ == '__main__':
     main()
