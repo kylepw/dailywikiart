@@ -13,6 +13,7 @@ from PIL import Image
 import random
 import requests
 import tweepy
+import sqlite3
 import sys
 
 
@@ -26,9 +27,53 @@ ACCESS_SECRET = os.getenv('ACCESS_SECRET')
 SRC_URL = 'https://www.wikiart.org/?json=2&layout=new&param=high_resolution'
 
 
+DB_FILENAME = 'urls.db'
+
+
 logging.basicConfig(format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
 
 
+''' Establish connection to database. '''
+def connect_to_db(db_file):
+    conn = sqlite3.connect(db_file)
+    return conn
+
+
+def create_urls_table(conn):
+    urls_sql = '''
+        CREATE TABLE IF NOT EXISTS urls (
+            id integer PRIMARY KEY,
+            url text NOT NULL UNIQUE)
+        '''
+    c = conn.cursor()
+    c.execute(urls_sql)
+
+
+''' Record `url` to database. '''
+def record_url(conn, url):
+    record_sql = '''
+        INSERT INTO urls (url)
+        VALUES (?)
+    '''
+    c = conn.cursor()
+    try:
+        c.execute(record_sql, (url,))
+    except sqlite3.IntegrityError as e:
+        logging.exception('URL already tweeted!', e)
+    conn.commit()
+
+
+''' Check if `url` already exists in database. '''
+def is_duplicate(conn, url):
+    dupl_check_sql = '''
+        SELECT url FROM urls WHERE url=?
+    '''
+    c = conn.cursor()
+    c.execute(dupl_check_sql, (url,))
+    return c.fetchone()
+
+
+''' Get tweepy API object. '''
 def get_api():
     auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_SECRET)
@@ -109,7 +154,7 @@ def dl_file(url):
 
 
 ''' Remove files. '''
-def _cleanup(*files):
+def _cleanup_files(*files):
     for file in files:
         try:
             os.remove(file)
@@ -143,19 +188,41 @@ def tweet_image(url):
 
     api.update_with_media(thumbnail, status=url)
 
-    _cleanup(original, thumbnail)
+    _cleanup_files(original, thumbnail)
 
+'''
+Todo:
+1. Prevent retweets
+2. Include description of image?
+
+'''
 
 def main():
-    try:
-        # Retrieve random hi-res image.
-        logging.info('Searching for image...')
-        url = get_random(scrape_urls(SRC_URL))[0]
-        tweet_image(url)
-        logging.info('Tweeted ', url)
-    except Exception:
-        logging.exception('Something went wrong.')
-        sys.exit(1)
+    conn = connect_to_db(DB_FILENAME)
+
+    with conn:
+        try:
+            # Initialize database
+            create_urls_table(conn)
+
+            # Retrieve random hi-res image.
+            logging.info('Searching for image...')
+
+            # Skip duplicates
+            url = get_random(scrape_urls(SRC_URL))[0]
+            while is_duplicate(conn, url):
+                url = get_random(scrape_urls(SRC_URL))[0]
+
+            # Tweet it
+            tweet_image(url)
+            logging.info('Tweeted %s', url)
+
+            # Record url
+            record_url(conn, url)
+
+        except Exception as e:
+            logging.exception('Something went wrong.', e)
+            sys.exit(1)
 
 if __name__ == '__main__':
     main()
