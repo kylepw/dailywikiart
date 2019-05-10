@@ -9,6 +9,7 @@
 import json
 import logging
 import os
+import os.path
 from PIL import Image
 import random
 import requests
@@ -29,10 +30,10 @@ SRC_URL = 'https://www.wikiart.org/?json=2&layout=new&param=high_resolution&layo
 
 
 # If duplicates, wait before trying next page of json data
-DUPLICATE_TIMEOUT = 5
+DUPLICATE_TIMEOUT = 3
 
 
-DB_FILENAME = 'tweeted.db'
+DB_FILENAME = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tweeted.db')
 
 
 logging.basicConfig(format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s', level=logging.INFO)
@@ -134,7 +135,7 @@ def scrape_images(src_url):
         Any typical Requests exceptions.
 
     Yields:
-        Parsed url results in dicationary format.
+        Parsed url results in dictionary format.
 
     '''
     # Exceptions raised here if connection issue arises
@@ -152,12 +153,12 @@ def scrape_images(src_url):
             img['year'] = obj.get('year', '')
             yield img
     else:
-        yield ''
+        logging.error('No data to scrape at %s', src_url)
 
 
 ''' Download file. '''
 def dl_file(url):
-    filename = 'temp.jpg'
+    filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'temp.jpg')
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
         with open (filename, 'wb') as f:
@@ -181,7 +182,7 @@ def create_thumbnail(original):
     # Based on Twitter recommendation.
     size = 1280, 1280
 
-    thumbnail = original + '.thumbnail.jpg'
+    thumbnail = os.path.join(os.path.dirname(original), 'temp_small.jpg')
 
     try:
         im = Image.open(original)
@@ -243,10 +244,11 @@ def main():
 
             # Record url
             record_img(conn, img_data)
-
     except Exception:
         logging.exception('Something went wrong.')
         sys.exit(1)
+    finally:
+        conn.close()
 
 if __name__ == '__main__':
     main()
