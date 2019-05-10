@@ -27,7 +27,7 @@ ACCESS_SECRET = os.getenv('ACCESS_SECRET')
 SRC_URL = 'https://www.wikiart.org/?json=2&layout=new&param=high_resolution'
 
 
-DB_FILENAME = 'urls.db'
+DB_FILENAME = 'tweeted.db'
 
 
 logging.basicConfig(format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
@@ -39,34 +39,43 @@ def connect_to_db(db_file):
     return conn
 
 
-def create_urls_table(conn):
-    urls_sql = '''
-        CREATE TABLE IF NOT EXISTS urls (
+def create_paintings_table(conn):
+    paintings_sql = '''
+        CREATE TABLE IF NOT EXISTS paintings (
             id integer PRIMARY KEY,
-            url text NOT NULL UNIQUE)
+            url text NOT NULL UNIQUE,
+            artist text,
+            title text,
+            year text)
         '''
     c = conn.cursor()
-    c.execute(urls_sql)
+    c.execute(paintings_sql)
 
 
-''' Record `url` to database. '''
-def record_url(conn, url):
+''' Record image data to database. '''
+def record_img(conn, data):
     record_sql = '''
-        INSERT INTO urls (url)
-        VALUES (?)
+        INSERT INTO paintings (url, artist, title, year)
+        VALUES (?, ?, ?, ?)
     '''
     c = conn.cursor()
     try:
-        c.execute(record_sql, (url,))
-    except sqlite3.IntegrityError as e:
-        logging.exception('URL already tweeted!', e)
+        c.execute(record_sql, (
+            data['url'],
+            data['artist'],
+            data['title'],
+            data['year']
+            )
+        )
+    except sqlite3.IntegrityError:
+        logging.exception('URL already tweeted!')
     conn.commit()
 
 
 ''' Check if `url` already exists in database. '''
 def is_duplicate(conn, url):
     dupl_check_sql = '''
-        SELECT url FROM urls WHERE url=?
+        SELECT url FROM paintings WHERE url=?
     '''
     c = conn.cursor()
     c.execute(dupl_check_sql, (url,))
@@ -115,8 +124,8 @@ def get_random(iterator, k=1):
     return results
 
 
-def scrape_urls(src_url):
-    '''Scrape jpg urls.
+def scrape_images(src_url):
+    '''Scrape image urls, titles, and authors.
 
     Args:
         src_url: URL to scrape.
@@ -125,7 +134,7 @@ def scrape_urls(src_url):
         Any typical Requests exceptions.
 
     Yields:
-        Parsed url results in string format.
+        Parsed url results in dicationary format.
 
     '''
     # Exceptions raised here if connection issue arises
@@ -136,7 +145,12 @@ def scrape_urls(src_url):
 
     if data is not None:
         for obj in data:
-            yield obj.get('image', '')
+            img = {}
+            img['url'] = obj.get('image', '')
+            img['artist'] = obj.get('artistName', '')
+            img['title'] = obj.get('title', '')
+            img['year'] = obj.get('year', '')
+            yield img
     else:
         yield ''
 
@@ -147,7 +161,7 @@ def dl_file(url):
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
         with open (filename, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
+            for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
     return filename
@@ -180,22 +194,22 @@ def create_thumbnail(original):
 
 
 ''' Tweet image preview along with url. '''
-def tweet_image(url):
+def tweet_image(data):
     api = get_api()
 
-    original = dl_file(url)
+    msg = f"{data['title']} ({data['year']}) by {data['artist']}\n{data['url']}"
+
+    logging.info('Download image...')
+    original = dl_file(data['url'])
+    logging.info('Create thumbnail...')
     thumbnail = create_thumbnail(original)
 
-    api.update_with_media(thumbnail, status=url)
+    logging.info('Tweet it...')
+    api.update_with_media(thumbnail, status=msg)
 
+    logging.info('Clean up files...')
     _cleanup_files(original, thumbnail)
 
-'''
-Todo:
-1. Prevent retweets
-2. Include description of image?
-
-'''
 
 def main():
     conn = connect_to_db(DB_FILENAME)
@@ -203,25 +217,27 @@ def main():
     with conn:
         try:
             # Initialize database
-            create_urls_table(conn)
+            create_paintings_table(conn)
 
             # Retrieve random hi-res image.
             logging.info('Searching for image...')
 
             # Skip duplicates
-            url = get_random(scrape_urls(SRC_URL))[0]
-            while is_duplicate(conn, url):
-                url = get_random(scrape_urls(SRC_URL))[0]
+            img_data = get_random(scrape_images(SRC_URL))[0]
+            while is_duplicate(conn, img_data['url']):
+                logging.info('Duplicate found.')
+                img_data = get_random(scrape_images(SRC_URL))[0]
 
             # Tweet it
-            tweet_image(url)
-            logging.info('Tweeted %s', url)
+            logging.info('Start tweeting image...')
+            tweet_image(img_data)
+            logging.info('Tweeted %s', img_data)
 
             # Record url
-            record_url(conn, url)
+            record_img(conn, img_data)
 
-        except Exception as e:
-            logging.exception('Something went wrong.', e)
+        except Exception:
+            logging.exception('Something went wrong.')
             sys.exit(1)
 
 if __name__ == '__main__':
