@@ -12,6 +12,7 @@ import os
 from PIL import Image
 import random
 import requests
+import time
 import tweepy
 import sqlite3
 import sys
@@ -24,13 +25,17 @@ ACCESS_SECRET = os.getenv('ACCESS_SECRET')
 
 
 # Source of Hi-Res images
-SRC_URL = 'https://www.wikiart.org/?json=2&layout=new&param=high_resolution'
+SRC_URL = 'https://www.wikiart.org/?json=2&layout=new&param=high_resolution&layout=new&page={}'
+
+
+# If duplicates, wait before trying next page of json data
+DUPLICATE_TIMEOUT = 5
 
 
 DB_FILENAME = 'tweeted.db'
 
 
-logging.basicConfig(format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+logging.basicConfig(format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s', level=logging.INFO)
 
 
 ''' Establish connection to database. '''
@@ -48,8 +53,7 @@ def create_paintings_table(conn):
             title text,
             year text)
         '''
-    c = conn.cursor()
-    c.execute(paintings_sql)
+    conn.execute(paintings_sql)
 
 
 ''' Record image data to database. '''
@@ -58,9 +62,8 @@ def record_img(conn, data):
         INSERT INTO paintings (url, artist, title, year)
         VALUES (?, ?, ?, ?)
     '''
-    c = conn.cursor()
     try:
-        c.execute(record_sql, (
+        conn.execute(record_sql, (
             data['url'],
             data['artist'],
             data['title'],
@@ -69,7 +72,6 @@ def record_img(conn, data):
         )
     except sqlite3.IntegrityError:
         logging.exception('URL already tweeted!')
-    conn.commit()
 
 
 ''' Check if `url` already exists in database. '''
@@ -77,9 +79,7 @@ def is_duplicate(conn, url):
     dupl_check_sql = '''
         SELECT url FROM paintings WHERE url=?
     '''
-    c = conn.cursor()
-    c.execute(dupl_check_sql, (url,))
-    return c.fetchone()
+    return conn.execute(dupl_check_sql, (url,)).fetchone()
 
 
 ''' Get tweepy API object. '''
@@ -213,9 +213,10 @@ def tweet_image(data):
 
 def main():
     conn = connect_to_db(DB_FILENAME)
+    json_page = 1
 
-    with conn:
-        try:
+    try:
+        with conn:
             # Initialize database
             create_paintings_table(conn)
 
@@ -223,10 +224,17 @@ def main():
             logging.info('Searching for image...')
 
             # Skip duplicates
-            img_data = get_random(scrape_images(SRC_URL))[0]
+            img_data = get_random(scrape_images(SRC_URL.format(json_page)))[0]
+            start = time.time()
             while is_duplicate(conn, img_data['url']):
                 logging.info('Duplicate found.')
-                img_data = get_random(scrape_images(SRC_URL))[0]
+                img_data = get_random(scrape_images(SRC_URL.format(json_page)))[0]
+
+                # Try next page of data after certain time
+                if time.time() - start > DUPLICATE_TIMEOUT:
+                    json_page += 1
+                    logging.info('trying next page %s', json_page)
+                    start = time.time()
 
             # Tweet it
             logging.info('Start tweeting image...')
@@ -236,9 +244,9 @@ def main():
             # Record url
             record_img(conn, img_data)
 
-        except Exception:
-            logging.exception('Something went wrong.')
-            sys.exit(1)
+    except Exception:
+        logging.exception('Something went wrong.')
+        sys.exit(1)
 
 if __name__ == '__main__':
     main()
