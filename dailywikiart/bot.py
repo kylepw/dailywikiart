@@ -39,8 +39,8 @@ DB_FILENAME = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tweeted.
 logging.basicConfig(format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s', level=logging.INFO)
 
 
-''' Establish connection to database. '''
 def connect_to_db(db_file):
+    ''' Establish connection to database. '''
     conn = sqlite3.connect(db_file)
     return conn
 
@@ -57,8 +57,8 @@ def create_paintings_table(conn):
     conn.execute(paintings_sql)
 
 
-''' Record image data to database. '''
 def record_img(conn, data):
+    ''' Record image data to database. '''
     record_sql = '''
         INSERT INTO paintings (url, artist, title, year)
         VALUES (?, ?, ?, ?)
@@ -75,16 +75,16 @@ def record_img(conn, data):
         logging.exception('URL already tweeted!')
 
 
-''' Check if `url` already exists in database. '''
 def is_duplicate(conn, url):
+    ''' Check if `url` already exists in database. '''
     dupl_check_sql = '''
         SELECT url FROM paintings WHERE url=?
     '''
     return conn.execute(dupl_check_sql, (url,)).fetchone()
 
 
-''' Get tweepy API object. '''
 def get_api():
+    ''' Get tweepy API object. '''
     auth = tweepy.OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_SECRET)
     return tweepy.API(auth)
@@ -156,8 +156,8 @@ def scrape_images(src_url):
         logging.error('No data to scrape at %s', src_url)
 
 
-''' Download file. '''
 def dl_file(url):
+    ''' Download file. '''
     filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'temp.jpg')
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
@@ -168,8 +168,8 @@ def dl_file(url):
     return filename
 
 
-''' Remove files. '''
 def _cleanup_files(*files):
+    ''' Remove files. '''
     for file in files:
         try:
             os.remove(file)
@@ -177,8 +177,9 @@ def _cleanup_files(*files):
             logging.exception('Failed to remove %s', file)
 
 
-''' Create thumbnail version of an image. '''
 def create_thumbnail(original):
+    ''' Create thumbnail version of an image. '''
+
     # Based on Twitter recommendation.
     size = 1280, 1280
 
@@ -194,8 +195,9 @@ def create_thumbnail(original):
         logging.exception('Failed to create thumbnail for %s', original)
 
 
-''' Tweet image preview along with url. '''
 def tweet_image(data):
+    ''' Tweet image preview along with url. '''
+
     api = get_api()
 
     msg = f"{data['title']} ({data['year']}) by {data['artist']}\n{data['url']}"
