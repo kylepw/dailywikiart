@@ -74,7 +74,7 @@ class TweetDatabase():
 
 
     def add(self, data):
-        ''' Add image data to database.
+        '''Add image data to database.
 
         Args:
             data (:obj:`dict` [`url`, `artist`, `title`, `year`]): image data

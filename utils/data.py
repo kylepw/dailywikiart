@@ -54,7 +54,7 @@ def scrape_images(src_url):
     '''Scrape image urls, titles, and authors.
 
     Args:
-        src_url: URL to scrape.
+        src_url (`str`): URL to scrape.
 
     Raises:
         Any typical Requests exceptions.

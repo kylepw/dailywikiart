@@ -37,7 +37,7 @@ class TwitterAPI():
         access_token=ACCESS_TOKEN,
         access_secret=ACCESS_SECRET
     ):
-        ''' Connect to Twitter API.
+        '''Connect to Twitter API.
 
         Args:
             consumer_key (str, optional): key to authorize application
@@ -56,7 +56,7 @@ class TwitterAPI():
 
 
     def tweet_image(self, data):
-        ''' Tweet description of image along with thumbnail.
+        '''Tweet description of image along with thumbnail.
 
         Args:
             data (:obj:`dict` [`title`, `year`, `artist`, `url`]): Image data.

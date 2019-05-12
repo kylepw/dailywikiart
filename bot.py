@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    '''Run Twitter bot.
+    '''Execute Twitter bot.
 
     Note:
         Checks pulled data against Sqlite3 database to prevent duplicate
