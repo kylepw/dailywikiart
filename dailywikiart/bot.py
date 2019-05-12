@@ -1,6 +1,6 @@
 '''
     bot.py
-    ~~~~~~~~~~~
+    ~~~~~~
 
     Twitter bot that tweets a random image from Wikiart's Hi-Res archive.
 
@@ -15,8 +15,9 @@ import random
 import requests
 import time
 import tweepy
-import sqlite3
 import sys
+
+from db import TweetsDatabase
 
 
 CONSUMER_KEY = os.getenv('CONSUMER_KEY')
@@ -33,54 +34,8 @@ SRC_URL = 'https://www.wikiart.org/?json=2&layout=new&param=high_resolution&layo
 DUPLICATE_TIMEOUT = 3
 
 
-DB_FILENAME = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'tweeted.db')
-
-
 logging.basicConfig(format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s', level=logging.INFO)
-
-
-def connect_to_db(db_file):
-    ''' Establish connection to database. '''
-    conn = sqlite3.connect(db_file)
-    return conn
-
-
-def create_paintings_table(conn):
-    paintings_sql = '''
-        CREATE TABLE IF NOT EXISTS paintings (
-            id integer PRIMARY KEY,
-            url text NOT NULL UNIQUE,
-            artist text,
-            title text,
-            year text)
-        '''
-    conn.execute(paintings_sql)
-
-
-def record_img(conn, data):
-    ''' Record image data to database. '''
-    record_sql = '''
-        INSERT INTO paintings (url, artist, title, year)
-        VALUES (?, ?, ?, ?)
-    '''
-    try:
-        conn.execute(record_sql, (
-            data['url'],
-            data['artist'],
-            data['title'],
-            data['year']
-            )
-        )
-    except sqlite3.IntegrityError:
-        logging.exception('URL already tweeted!')
-
-
-def is_duplicate(conn, url):
-    ''' Check if `url` already exists in database. '''
-    dupl_check_sql = '''
-        SELECT url FROM paintings WHERE url=?
-    '''
-    return conn.execute(dupl_check_sql, (url,)).fetchone()
+logger = logging.getLogger(__name__)
 
 
 def get_api():
@@ -120,7 +75,7 @@ def get_random(iterator, k=1):
                 results[s] = item
 
     if len(results) < k:
-        logging.warning('Size of iterator (%s) is less than k (%s)', len(results), k)
+        logger.warning('Size of iterator (%s) is less than k (%s)', len(results), k)
 
     return results
 
@@ -153,7 +108,7 @@ def scrape_images(src_url):
             img['year'] = obj.get('year', '')
             yield img
     else:
-        logging.error('No data to scrape at %s', src_url)
+        logger.error('No data to scrape at %s', src_url)
 
 
 def dl_file(url):
@@ -174,7 +129,7 @@ def _cleanup_files(*files):
         try:
             os.remove(file)
         except IOError:
-            logging.exception('Failed to remove %s', file)
+            logger.exception('Failed to remove %s', file)
 
 
 def create_thumbnail(original):
@@ -192,7 +147,7 @@ def create_thumbnail(original):
 
         return thumbnail
     except IOError:
-        logging.exception('Failed to create thumbnail for %s', original)
+        logger.exception('Failed to create thumbnail for %s', original)
 
 
 def tweet_image(data):
@@ -202,55 +157,52 @@ def tweet_image(data):
 
     msg = f"{data['title']} ({data['year']}) by {data['artist']}\n{data['url']}"
 
-    logging.info('Download image...')
+    logger.info('Download image...')
     original = dl_file(data['url'])
-    logging.info('Create thumbnail...')
+    logger.info('Create thumbnail...')
     thumbnail = create_thumbnail(original)
 
-    logging.info('Tweet it...')
-    api.update_with_media(thumbnail, status=msg)
+    logger.info('Tweet it...')
+    #api.update_with_media(thumbnail, status=msg)
 
-    logging.info('Clean up files...')
+    logger.info('Clean up files...')
     _cleanup_files(original, thumbnail)
 
 
 def main():
-    conn = connect_to_db(DB_FILENAME)
     json_page = 1
 
     try:
-        with conn:
-            # Initialize database
-            create_paintings_table(conn)
+        with TweetsDatabase() as db:
 
             # Retrieve random hi-res image.
-            logging.info('Searching for image...')
+            logger.info('Searching for image...')
 
             # Skip duplicates
             img_data = get_random(scrape_images(SRC_URL.format(json_page)))[0]
             start = time.time()
-            while is_duplicate(conn, img_data['url']):
-                logging.info('Duplicate found.')
+            while db.is_duplicate(img_data['url']):
+                logger.info('Duplicate found.')
                 img_data = get_random(scrape_images(SRC_URL.format(json_page)))[0]
 
                 # Try next page of data after certain time
                 if time.time() - start > DUPLICATE_TIMEOUT:
                     json_page += 1
-                    logging.info('trying next page %s', json_page)
+                    logger.info('trying next page %s', json_page)
                     start = time.time()
 
             # Tweet it
-            logging.info('Start tweeting image...')
+            logger.info('Start tweeting image...')
             tweet_image(img_data)
-            logging.info('Tweeted %s', img_data)
+            logger.info('Tweeted %s', img_data)
 
-            # Record url
-            record_img(conn, img_data)
+            # Add record of tweet
+            db.add(img_data)
+
     except Exception:
-        logging.exception('Something went wrong.')
+        logger.exception('Something went wrong.')
         sys.exit(1)
-    finally:
-        conn.close()
+
 
 if __name__ == '__main__':
     main()

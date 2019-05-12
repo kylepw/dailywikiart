@@ -8,27 +8,48 @@ import logging
 import sqlite3
 
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
+logger = logging.getLogger(__name__)
 
 
-class Tweeted():
+class TweetsDatabase():
 
-    def __init__(self, db_filename):
-        self.conn = sqlite3.connect(db_filename)
-        self.create_table()
+    def __init__(self, db_filename='tweets.db'):
+        self.db_filename = db_filename
 
 
-    def create_table(self):
+    def __enter__(self):
+        ''' Run when called as context manager. '''
+        logger.info('entering context manager')
+        self._connect()
+        self._create_table()
+        return self
+
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        logger.info('exiting context manager')
+        if self.conn:
+            self.conn.commit()
+            self.conn.close()
+
+
+    def _connect(self):
+        try:
+            self.conn = sqlite3.connect(self.db_filename)
+        except sqlite3.Error:
+            logger.exception('Failed to connect to database!')
+
+
+    def _create_table(self, name='paintings'):
         paintings_sql = '''
-            CREATE TABLE IF NOT EXISTS paintings (
+            CREATE TABLE IF NOT EXISTS {} (
                 id integer PRIMARY KEY,
                 url text NOT NULL UNIQUE,
                 artist text,
                 title text,
                 year text)
-            '''
-        with self.conn:
-            self.conn.execute(paintings_sql)
+            '''.format(name)
+
+        self.conn.execute(paintings_sql)
 
 
     def add(self, data):
@@ -48,7 +69,7 @@ class Tweeted():
                     )
                 )
         except sqlite3.IntegrityError:
-            logging.exception('Already tweeted %s!', data['url'])
+            logger.exception('Already tweeted %s!', data['url'])
 
 
     def is_duplicate(self, url):
@@ -79,11 +100,11 @@ if __name__ == '__main__':
     data3['title'] = 'hello'
     data3['year'] = '1037'
 
-    t = Tweeted(':memory:')
+    with TweetedDB(':memory:') as t:
 
-    t.add(data1)
-    t.add(data2)
+        t.add(data1)
+        t.add(data2)
 
-    assert t.is_duplicate(data1['url'])
-    assert t.is_duplicate(data2['url'])
-    assert not t.is_duplicate(data3['url'])
+        assert t.is_duplicate(data1['url'])
+        assert t.is_duplicate(data2['url'])
+        assert not t.is_duplicate(data3['url'])
