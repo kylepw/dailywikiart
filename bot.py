@@ -24,7 +24,10 @@ SRC_URL = 'https://www.wikiart.org/?json=2&layout=new&param=high_resolution&layo
 DUPLICATE_TIMEOUT = 3
 
 
-logging.basicConfig(format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s', level=logging.INFO)
+logging.basicConfig(
+    format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+    level=os.environ.get('LOGLEVEL', 'WARNING').upper()
+)
 logger = logging.getLogger(__name__)
 
 
