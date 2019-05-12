@@ -1,6 +1,9 @@
 '''
 
-Sqlite3 database wrapper for tweeted data.
+db.py
+~~~~~
+
+Sqlite3 database wrapper for tweet data.
 
 '''
 
@@ -19,14 +22,12 @@ class TweetsDatabase():
 
     def __enter__(self):
         ''' Run when called as context manager. '''
-        logger.info('entering context manager')
         self._connect()
         self._create_table()
         return self
 
 
     def __exit__(self, exception_type, exception_value, traceback):
-        logger.info('exiting context manager')
         if self.conn:
             self.conn.commit()
             self.conn.close()
