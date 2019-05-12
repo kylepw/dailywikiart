@@ -73,7 +73,7 @@ class TwitterAPI():
         thumbnail = create_thumbnail(original)
 
         logger.info('Tweet it...')
-        #self.api.update_with_media(thumbnail, status=msg)
+        self.api.update_with_media(thumbnail, status=msg)
 
         logger.info('Clean up files...')
         cleanup(original, thumbnail)
