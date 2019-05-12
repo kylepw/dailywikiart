@@ -6,7 +6,7 @@ dailywikiart Twitter Bot
 works of art from wikiart's API. Each tweet includes a thumbnail, description
 of the work, and a link to the original image.
 
-See it in action: `@dailywikiart`__
+See it in the wild: `@dailywikiart`__
 
 __ https://twitter.com/dailywikiart
 
