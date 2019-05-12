@@ -14,7 +14,7 @@ import sqlite3
 logger = logging.getLogger(__name__)
 
 
-class TweetsDatabase():
+class TweetDatabase():
 
     def __init__(self, db_filename='tweets.db'):
         self.db_filename = db_filename
@@ -80,32 +80,3 @@ class TweetsDatabase():
         '''
         with self.conn:
             return self.conn.execute(dupl_check_sql, (url,)).fetchone()
-
-
-if __name__ == '__main__':
-    data1 = {}
-    data1['url'] = 'http://hey'
-    data1['artist'] = 'goh'
-    data1['title'] = 'title'
-    data1['year'] = '1999'
-
-    data2 = {}
-    data2['url'] = 'http://jeezus'
-    data2['artist'] = 'da vinci'
-    data2['title'] = 'another title'
-    data2['year'] = '1897'
-
-    data3 = {}
-    data3['url'] = 'http://jeezus.rocks'
-    data3['artist'] = 'da ho'
-    data3['title'] = 'hello'
-    data3['year'] = '1037'
-
-    with TweetedDB(':memory:') as t:
-
-        t.add(data1)
-        t.add(data2)
-
-        assert t.is_duplicate(data1['url'])
-        assert t.is_duplicate(data2['url'])
-        assert not t.is_duplicate(data3['url'])
