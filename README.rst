@@ -61,12 +61,12 @@ Usage
 -----
 ::
 
-    (venv)$ # Make sure your virtual environment is active first.
-    (venv)$ python bot.py
+    (venv) $ # Make sure your virtual environment is active first.
+    (venv) $ python bot.py
 
 or to view logs: ::
 
-    (venv)$ LOGLEVEL=info python bot.py
+    (venv) $ LOGLEVEL=info python bot.py
 
 Scheduling
 ----------
