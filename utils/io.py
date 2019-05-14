@@ -1,11 +1,11 @@
-'''
+"""
 
 io.py
 ~~~~~~~~~
 
 Image file-related processing.
 
-'''
+"""
 import logging
 import os
 import os.path
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def dl_image(url):
-    '''Download file from `url` as a jpeg.
+    """Download file from `url` as a jpeg.
 
     Args:
         url (`str`): URL path to image file
@@ -28,11 +28,11 @@ def dl_image(url):
     Returns:
         filename: filename of downloaded image
 
-    '''
+    """
     filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'original.jpg')
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
-        with open (filename, 'wb') as f:
+        with open(filename, 'wb') as f:
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
@@ -40,7 +40,7 @@ def dl_image(url):
 
 
 def create_thumbnail(original):
-    '''Create thumbnail version of an image.
+    """Create thumbnail version of an image.
 
     Args:
         original (`str`): filename of full-sized jpeg image.
@@ -52,7 +52,7 @@ def create_thumbnail(original):
     Returns:
         thumbnail (`str`): filename of thumbnail jpeg image.
 
-    '''
+    """
 
     # Based on Twitter recommendation.
     size = 1280, 1280
@@ -70,7 +70,7 @@ def create_thumbnail(original):
 
 
 def cleanup(*files):
-    '''Remove files.
+    """Remove files.
 
     Args:
         *files (:obj: of :obj:`str`): files to remove.
@@ -81,7 +81,7 @@ def cleanup(*files):
     Raises:
         OSError if removal of file(s) fail(s).
 
-    '''
+    """
     for file in files:
         try:
             os.remove(file)

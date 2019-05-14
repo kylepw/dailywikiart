@@ -10,7 +10,6 @@ Twitter API-related classes and functions.
 import logging
 import os
 import tweepy
-import requests
 from utils.io import dl_image, create_thumbnail, cleanup
 
 
@@ -24,18 +23,18 @@ ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
 ACCESS_SECRET = os.getenv('ACCESS_SECRET')
 
 
-class TwitterAPI():
+class TwitterAPI:
     '''Connect and talk to Twitter API.'''
 
     def __init__(self):
         self.api = self._get_api()
 
-
-    def _get_api(self,
+    def _get_api(
+        self,
         consumer_key=CONSUMER_KEY,
         consumer_secret=CONSUMER_SECRET,
         access_token=ACCESS_TOKEN,
-        access_secret=ACCESS_SECRET
+        access_secret=ACCESS_SECRET,
     ):
         '''Connect to Twitter API.
 
@@ -54,16 +53,15 @@ class TwitterAPI():
         api = tweepy.API(auth)
         return api
 
-
     def tweet_image(self, data):
-        '''Tweet description of image along with thumbnail.
+        """Tweet description of image along with thumbnail.
 
         Args:
             data (:obj:`dict` [`title`, `year`, `artist`, `url`]): Image data.
 
         Returns: None
 
-        '''
+        """
 
         msg = f"{data['title']} ({data['year']}) by {data['artist']}\n{data['url']}"
 

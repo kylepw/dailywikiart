@@ -1,11 +1,11 @@
-'''
+"""
 
 data.py
 ~~~~~
 
 Data processing methods.
 
-'''
+"""
 
 import logging
 import random
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def get_random(iterator, k=1):
-    '''Get random sample of items in iterator.
+    """Get random sample of items in iterator.
 
     Args:
         iterator: any iterator you want random samples from.
@@ -33,7 +33,7 @@ def get_random(iterator, k=1):
         is `k` or number of items in `iterator` if `k` is larger than
         the total number of items.
 
-    '''
+    """
     results = []
 
     for i, item in enumerate(iterator):
@@ -45,13 +45,13 @@ def get_random(iterator, k=1):
                 results[s] = item
 
     if len(results) < k:
-        logger.warning('Size of iterator (%s) is less than k (%s)', len(results), k)
+        logger.warning('Iterator size (%s) less than k (%s)', len(results), k)
 
     return results
 
 
 def scrape_images(src_url):
-    '''Scrape image urls, titles, and authors.
+    """Scrape image urls, titles, and authors.
 
     Args:
         src_url (`str`): URL to scrape.
@@ -62,7 +62,7 @@ def scrape_images(src_url):
     Yields:
         Parsed url results in dictionary format.
 
-    '''
+    """
 
     r = requests.get(src_url)
     r.raise_for_status()

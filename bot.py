@@ -1,15 +1,14 @@
-'''
+"""
     bot.py
     ~~~~~~
 
     Twitter bot that tweets a random image from Wikiart's Hi-Res archive.
 
-'''
+"""
 
 import logging
 import os
 import time
-import tweepy
 
 from db import TweetDatabase
 from twitter import TwitterAPI
@@ -26,13 +25,13 @@ DUPLICATE_TIMEOUT = 3
 
 logging.basicConfig(
     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-    level=os.environ.get('LOGLEVEL', 'WARNING').upper()
+    level=os.environ.get('LOGLEVEL', 'WARNING').upper(),
 )
 logger = logging.getLogger(__name__)
 
 
 def main():
-    '''Execute Twitter bot.
+    """Execute Twitter bot.
 
     Note:
         Checks pulled data against Sqlite3 database to prevent duplicate
@@ -42,7 +41,7 @@ def main():
     Exceptions:
         All exceptions are logged with stack trace.
 
-    '''
+    """
     # Start at first page of json data.
     json_page = 1
 
