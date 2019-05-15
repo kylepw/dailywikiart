@@ -37,13 +37,12 @@ def main():
         Checks pulled data against Sqlite3 database to prevent duplicate
         tweets. After some time, the next page of json data will be used
         to pull new data.
-
     Exceptions:
         All exceptions are logged with stack trace.
 
     """
     # Start at first page of json data.
-    json_page = 1
+    json_page = 0
 
     try:
         with TweetDatabase() as db:
