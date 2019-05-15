@@ -97,6 +97,9 @@ class TweetDatabase:
 
         Args:
             url(`str`): url of image
+            
+        Returns:
+            A duplicate match (`str`) or None.
 
         """
         dupl_check_sql = '''
