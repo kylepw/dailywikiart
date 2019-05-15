@@ -9,7 +9,6 @@
     make sure the bot does not tweet the same image more than once.
 
 """
-
 import logging
 import os.path
 import sqlite3
