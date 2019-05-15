@@ -1,14 +1,12 @@
 """
+    db.py
+    ~~~~~
 
-db.py
-~~~~~
+    Sqlite3 database wrapper for tweeted data.
 
-Sqlite3 database wrapper for tweeted data.
-
-The database stores the following information (in str format) on wikiart images
-that the bot tweets: `url`, `artist`, `title`, `year`. The database is used to
-make sure the bot does not tweet the same image more than once.
-
+    The database stores the following information (in str format) on wikiart images
+    that the bot tweets: `url`, `artist`, `title`, `year`. The database is used to
+    make sure the bot does not tweet the same image more than once.
 
 """
 

@@ -1,9 +1,8 @@
 """
+    io.py
+    ~~~~~~~~~
 
-io.py
-~~~~~~~~~
-
-Image file-related processing.
+    Image file-related processing.
 
 """
 import logging
@@ -75,8 +74,9 @@ def cleanup(*files):
     Args:
         *files (:obj: of :obj:`str`): files to remove.
 
-    Note: Be careful with this guy! Only intended to remove temporary image
-    files that the bot creates.
+    Note:
+        Be careful with this guy! Only intended to remove
+        temporary image files that the bot creates.
 
     Raises:
         OSError if removal of file(s) fail(s).

@@ -1,11 +1,11 @@
-'''
+"""
 
-twitter.py
-~~~~~~~~~~
+    twitter.py
+    ~~~~~~~~~~
 
-Twitter API-related classes and functions.
+    Twitter API-related classes and functions.
 
-'''
+"""
 
 import logging
 import os
@@ -24,7 +24,7 @@ ACCESS_SECRET = os.getenv('ACCESS_SECRET')
 
 
 class TwitterAPI:
-    '''Connect and talk to Twitter API.'''
+    """Connect and talk to Twitter API."""
 
     def __init__(self):
         self.api = self._get_api()
@@ -36,7 +36,7 @@ class TwitterAPI:
         access_token=ACCESS_TOKEN,
         access_secret=ACCESS_SECRET,
     ):
-        '''Connect to Twitter API.
+        """Connect to Twitter API.
 
         Args:
             consumer_key (str, optional): key to authorize application
@@ -47,7 +47,7 @@ class TwitterAPI:
         Returns:
             api(:obj:): Twitter API wrapper
 
-        '''
+        """
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         auth.set_access_token(access_token, access_secret)
         api = tweepy.API(auth)

@@ -4,6 +4,10 @@
 
     Twitter bot that tweets a random image from Wikiart's Hi-Res archive.
 
+    Note:
+    Checks pulled data against Sqlite3 database to prevent duplicate tweets.
+    After some time, the next page of json data will be used to pull new data.
+
 """
 
 import logging
@@ -22,16 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    """Execute Twitter bot.
-
-    Note:
-        Checks pulled data against Sqlite3 database to prevent duplicate
-        tweets. After some time, the next page of json data will be used
-        to pull new data.
-    Exceptions:
-        All exceptions are logged with stack trace.
-
-    """
     try:
         with TweetDatabase() as db:
 

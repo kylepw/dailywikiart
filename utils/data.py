@@ -1,9 +1,8 @@
 """
+    data.py
+    ~~~~~
 
-data.py
-~~~~~
-
-Data processing methods.
+    Data processing methods.
 
 """
 
