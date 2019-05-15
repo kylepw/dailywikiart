@@ -11,6 +11,7 @@
 """
 
 import logging
+import os.path
 import sqlite3
 
 
