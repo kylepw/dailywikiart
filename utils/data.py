@@ -10,12 +10,21 @@ Data processing methods.
 import logging
 import random
 import requests
+import time
 
 
 logger = logging.getLogger(__name__)
 
 
-def get_random(iterator, k=1):
+# Source of hi-res images. Confirmed that pages 0~11 unique pages exist.
+SRC_URL = 'https://www.wikiart.org/?json=2&layout=new&param=high_resolution&layout=new&page={}'
+
+
+# If only duplicate images returned, wait before trying next page of json data.
+DUPLICATE_TIMEOUT = 3
+
+
+def _get_random(iterator, k=1):
     """Get random sample of items in iterator.
 
     Args:
@@ -50,7 +59,7 @@ def get_random(iterator, k=1):
     return results
 
 
-def scrape_images(src_url):
+def _scrape_images(src_url):
     """Scrape image urls, titles, and authors.
 
     Args:
@@ -60,7 +69,7 @@ def scrape_images(src_url):
         Any typical Requests exceptions.
 
     Yields:
-        Parsed url results in dictionary format.
+        Parsed data in dictionary format.
 
     """
 
@@ -79,3 +88,33 @@ def scrape_images(src_url):
             yield img
     else:
         logger.error('No data to scrape at %s', src_url)
+
+
+def get_data(db):
+    """Retrieve image data.
+
+    Args:
+        db (:obj:): instance of tweet database
+
+    Returns:
+        img_data (:obj:`dict` of [`url`, `artist`, `title`, `year`])
+
+    """
+    # Start at first page of json data.
+    json_page = 0
+
+    # Skip duplicates
+    img_data = _get_random(_scrape_images(SRC_URL.format(json_page)))[0]
+    start = time.time()
+    while db.is_duplicate(img_data['url']):
+
+        logger.warning('Duplicate!')
+        img_data = _get_random(_scrape_images(SRC_URL.format(json_page)))[0]
+
+        if time.time() - start > DUPLICATE_TIMEOUT:
+            # Try next page of data.
+            json_page += 1
+            logger.info('Trying next page %s', json_page)
+            start = time.time()
+
+    return img_data

@@ -65,13 +65,10 @@ class TwitterAPI:
 
         msg = f"{data['title']} ({data['year']}) by {data['artist']}\n{data['url']}"
 
-        logger.info('Download image...')
         original = dl_image(data['url'])
-        logger.info('Create thumbnail...')
+
         thumbnail = create_thumbnail(original)
 
-        logger.info('Tweet it...')
         self.api.update_with_media(thumbnail, status=msg)
 
-        logger.info('Clean up files...')
         cleanup(original, thumbnail)
