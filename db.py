@@ -29,7 +29,7 @@ class TweetDatabase:
     """
 
     def __init__(self, db_filename='tweets.db'):
-        self.db_filename = db_filename
+        self.db_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), db_filename)
 
     def __enter__(self):
         self._connect()
