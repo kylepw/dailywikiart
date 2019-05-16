@@ -100,7 +100,7 @@ def get_data(db):
 
     """
     # Start at first page of json data.
-    json_page = 0
+    json_page = 1
 
     # Skip duplicates
     img_data = _get_random(_scrape_images(SRC_URL.format(json_page)))[0]
