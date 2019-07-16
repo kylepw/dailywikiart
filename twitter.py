@@ -53,6 +53,25 @@ class TwitterAPI:
         api = tweepy.API(auth)
         return api
 
+    def _clean_str(self, s):
+        """Make string Twitter hashtag-friendly"""
+        if not isinstance(s, str):
+            return
+        if not s:
+            return s
+
+        NUM = {
+            '0': 'zero', '1': 'one', '2': 'two', '3': 'three', '4': 'four',
+            '5': 'five', '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine',
+        }
+        if not s[0].isalpha():
+        # Replace starting number character
+            s_edit = list(s)
+            s_edit[0] = NUM.get(s_edit[0], 'x')
+            s = ''.join(s_edit)
+        return ''.join(c for c in s if c.isalnum()).lower()
+
+
     def tweet_image(self, data):
         """Tweet description of image along with thumbnail.
 
@@ -63,7 +82,7 @@ class TwitterAPI:
 
         """
 
-        tags = f"#wikiart #{data['artist'].replace(' ', '').lower()}"
+        tags = f"#wikiart #{self._clean_str(data['artist'])}"
         msg = f"{data['title']} ({data['year']}) by {data['artist']}\n{data['url']} {tags}"
 
         original = dl_image(data['url'])
