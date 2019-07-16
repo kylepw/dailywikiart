@@ -82,5 +82,11 @@ class TwitterAPI:
         new_followers = [f for f in followers if f not in following]
 
         for f in new_followers:
-            self.api.create_friendship(f)
+            try:
+                self.api.create_friendship(f)
+            except tweepy.error.TweepError as e:
+                err = str(e)
+                # Ignore follow request errors
+                if "'code': 160" in err or "'code': 161" in err:
+                    continue
 
