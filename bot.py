@@ -42,6 +42,9 @@ def main():
             # Add record of tweet to database
             db.add(img_data)
 
+            # Follow new followers
+            api.follow_new()
+
     except Exception:
         logger.exception('Something went wrong.')
 

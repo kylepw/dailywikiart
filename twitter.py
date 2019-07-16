@@ -73,3 +73,14 @@ class TwitterAPI:
         self.api.update_with_media(thumbnail, status=msg)
 
         cleanup(original, thumbnail)
+
+    def follow_new(self):
+        """Follow new followers"""
+        followers = self.api.followers_ids()
+        following = self.api.friends_ids()
+
+        new_followers = [f for f in followers if f not in following]
+
+        for f in new_followers:
+            self.api.create_friendship(f)
+
