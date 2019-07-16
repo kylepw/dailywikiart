@@ -63,7 +63,8 @@ class TwitterAPI:
 
         """
 
-        msg = f"{data['title']} ({data['year']}) by {data['artist']}\n{data['url']}"
+        tags = f"#wikiart #{data['artist'].replace(' ', '').lower()}"
+        msg = f"{data['title']} ({data['year']}) by {data['artist']}\n{data['url']} {tags}"
 
         original = dl_image(data['url'])
 
