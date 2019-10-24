@@ -2,7 +2,7 @@
     db.py
     ~~~~~
 
-    Sqlite3 database wrapper for tweeted data.
+    MongoDB database wrapper for tweeted data.
 
     The database stores the following information (in str format) on wikiart images
     that the bot tweets: `url`, `artist`, `title`, `year`. The database is used to
@@ -10,8 +10,9 @@
 
 """
 import logging
+import os
 import os.path
-import sqlite3
+import pymongo
 
 
 logger = logging.getLogger(__name__)
@@ -24,49 +25,43 @@ class TweetDatabase:
         This class acts as a context manager.
 
     Args:
-        db_filename (`str`, optional): filename of database
+        uri (`str`, optional): mongodb uri string
 
     """
 
-    def __init__(self, db_filename='tweets.db'):
-        self.db_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)), db_filename)
+    def __init__(self, uri=None):
+        self.uri = uri or os.getenv('MONGODB_URI', 'mongodb://127.0.0.1:27017')
+        self.client = self.db = self.coll = None
 
     def __enter__(self):
         self._connect()
-        self._create_table()
+        self._create_collection()
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        if self.conn:
-            self.conn.commit()
-            self.conn.close()
+        if self.client:
+            self.client.close()
 
-    def _connect(self):
+    def _connect(self, db_name=None):
         """Connect to database. """
+        db_name = db_name or os.getenv('MONGODB_DBNAME', 'tweets')
         try:
-            self.conn = sqlite3.connect(self.db_filename)
-        except sqlite3.Error:
-            logger.exception('Failed to connect to database!')
+            self.client = pymongo.MongoClient(self.uri)
+            self.db = self.client[db_name]
+        except Exception:
+            logger.error(f'Failed to connect to {self.uri}!')
+            raise
 
-    def _create_table(self, name='paintings'):
-        """Create a table for image data if it does not exist.
+    def _create_collection(self, coll_name=None):
+        """Create a collection for image data if it does not exist.
 
         Args:
-            name (`str`, optional): name of table
+            name (`str`, optional): name of collection
 
         """
-        paintings_sql = '''
-            CREATE TABLE IF NOT EXISTS {} (
-                id integer PRIMARY KEY,
-                url text NOT NULL UNIQUE,
-                artist text,
-                title text,
-                year text)
-            '''.format(
-            name
-        )
-
-        self.conn.execute(paintings_sql)
+        coll_name = coll_name or 'wikiart'
+        if self.db:
+            self.coll = self.db[coll_name]
 
     def add(self, data):
         """Add image data to database.
@@ -75,34 +70,50 @@ class TweetDatabase:
             data (:obj:`dict` [`url`, `artist`, `title`, `year`]): image data
 
         Raises:
-            sqlite3.IntegrityError: If data already exists in database.
+           pymongo.errors.OperationFailure: If index exists with different options.
 
         """
-        record_sql = '''
-            INSERT INTO paintings (url, artist, title, year)
-            VALUES (?, ?, ?, ?)
-        '''
-        try:
-            with self.conn:
-                self.conn.execute(
-                    record_sql,
-                    (data['url'], data['artist'], data['title'], data['year']),
+        if self.coll:
+            # Make sure unique index exists
+            try:
+                self.coll.create_index(
+                    [
+                        ('artist', pymongo.ASCENDING),
+                        ('year', pymongo.ASCENDING),
+                        ('title', pymongo.ASCENDING),
+                        ('url', pymongo.ASCENDING),
+                    ],
+                    unique=True,
                 )
-        except sqlite3.IntegrityError:
-            logger.exception('Already tweeted %s!', data['url'])
+            except pymongo.errors.OperationFailure:
+                logger.error(
+                    "Failed to create unique index on collection '%s'", self.coll.name
+                )
+                raise
+
+            # Add tweet
+            try:
+                self.coll.insert_one(
+                    {
+                        'artist': data['artist'],
+                        'year': data['year'],
+                        'title': data['title'],
+                        'url': data['url'],
+                    }
+                )
+            except pymongo.errors.DuplicateKeyError:
+                logger.error('Already tweeted %s! Skipping insert.', data['url'])
 
     def is_duplicate(self, url):
         """Check if `url` already exists in database.
 
         Args:
             url(`str`): url of image
-            
+
         Returns:
             A duplicate match (`str`) or None.
 
         """
-        dupl_check_sql = '''
-            SELECT url FROM paintings WHERE url=?
-        '''
-        with self.conn:
-            return self.conn.execute(dupl_check_sql, (url,)).fetchone()
+        if self.coll:
+            return self.coll.find_one({'url': url})
+        return False

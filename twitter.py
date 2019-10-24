@@ -16,13 +16,6 @@ from utils.io import dl_image, create_thumbnail, cleanup
 logger = logging.getLogger(__name__)
 
 
-# Values required to connect to Twitter API.
-CONSUMER_KEY = os.getenv('CONSUMER_KEY')
-CONSUMER_SECRET = os.getenv('CONSUMER_SECRET')
-ACCESS_TOKEN = os.getenv('ACCESS_TOKEN')
-ACCESS_SECRET = os.getenv('ACCESS_SECRET')
-
-
 class TwitterAPI:
     """Connect and talk to Twitter API."""
 
@@ -31,10 +24,10 @@ class TwitterAPI:
 
     def _get_api(
         self,
-        consumer_key=CONSUMER_KEY,
-        consumer_secret=CONSUMER_SECRET,
-        access_token=ACCESS_TOKEN,
-        access_secret=ACCESS_SECRET,
+        consumer_key=None,
+        consumer_secret=None,
+        access_token=None,
+        access_secret=None,
     ):
         """Connect to Twitter API.
 
@@ -48,6 +41,14 @@ class TwitterAPI:
             api(:obj:): Twitter API wrapper
 
         """
+        consumer_key = consumer_key or os.getenv('CONSUMER_KEY')
+        consumer_secret = consumer_secret or os.getenv('CONSUMER_SECRET')
+        access_token = access_token or os.getenv('ACCESS_TOKEN')
+        access_secret = access_secret or os.getenv('ACCESS_SECRET')
+
+        if not all([consumer_key, consumer_secret, access_token, access_secret]):
+            raise ValueError('Some or all tweepy OAuth values missing!')
+
         auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         auth.set_access_token(access_token, access_secret)
         api = tweepy.API(auth)
@@ -61,16 +62,23 @@ class TwitterAPI:
             return s
 
         NUM = {
-            '0': 'zero', '1': 'one', '2': 'two', '3': 'three', '4': 'four',
-            '5': 'five', '6': 'six', '7': 'seven', '8': 'eight', '9': 'nine',
+            '0': 'zero',
+            '1': 'one',
+            '2': 'two',
+            '3': 'three',
+            '4': 'four',
+            '5': 'five',
+            '6': 'six',
+            '7': 'seven',
+            '8': 'eight',
+            '9': 'nine',
         }
         if not s[0].isalpha():
-        # Replace starting number character
+            # Replace starting number character
             s_edit = list(s)
             s_edit[0] = NUM.get(s_edit[0], 'x')
             s = ''.join(s_edit)
         return ''.join(c for c in s if c.isalnum()).lower()
-
 
     def tweet_image(self, data):
         """Tweet description of image along with thumbnail.
@@ -86,10 +94,10 @@ class TwitterAPI:
         msg = f"{data['title']} ({data['year']}) by {data['artist']}\n{data['url']} {tags}"
 
         original = dl_image(data['url'])
-
         thumbnail = create_thumbnail(original)
 
-        self.api.update_with_media(thumbnail, status=msg)
+        img = self.api.media_upload(filename=thumbnail.name, file=thumbnail)
+        self.api.update_status(status=msg, media_ids=[img.media_id])
 
         cleanup(original, thumbnail)
 
@@ -108,4 +116,3 @@ class TwitterAPI:
                 # Ignore follow request errors
                 if "'code': 160" in err or "'code': 161" in err:
                     continue
-

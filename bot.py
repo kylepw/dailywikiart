@@ -5,7 +5,7 @@
     Twitter bot that tweets a random image from Wikiart's Hi-Res archive.
 
     Note:
-    Checks pulled data against Sqlite3 database to prevent duplicate tweets.
+    Checks pulled data against database to prevent duplicate tweets.
     After some time, the next page of json data will be used to pull new data.
 
 """
