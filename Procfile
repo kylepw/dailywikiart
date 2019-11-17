@@ -1,1 +1,1 @@
-web: python bot.py
+clock: python job.py
