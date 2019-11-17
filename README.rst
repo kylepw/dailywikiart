@@ -6,14 +6,14 @@ dailywikiart Twitter Bot
 works of art from wikiart's API. Each tweet includes a thumbnail, description
 of the work, and a link to the original image.
 
-See it in the wild: `@dailywikiart`__
+See it in the wild running off heroku: `@dailywikiart`__
 
 __ https://twitter.com/dailywikiart
 
 Features
 --------
 - Randomized selection of high resolution art images.
-- Sqlite3 database ensures that an image is never tweeted more than once.
+- MongoDB database ensures that an image is never tweeted more than once.
 
 Requirements
 ------------
