@@ -18,6 +18,7 @@ Features
 Requirements
 ------------
 - Python 3.6+
+- running mongodb instance
 
 Installation
 ------------
@@ -44,12 +45,14 @@ __ https://iag.me/socialmedia/how-to-create-a-twitter-app-in-8-easy-steps/
         Your access token.
     `ACCESS_SECRET`
         Your access token secret.
+    `MONGODB_DBNAME`
+        Your mongodb URI
 
     You can use `python-dotenv`__, `pipenv`__, `virtualenv or bash`__ to set the environment variables.
 
     One way to do it (replacing ``XXX``'s with your values): ::
 
-    $ echo -e "API_KEY=XXX\nAPI_SECRET=XXX\nACCESS_TOKEN=XXX\nACCESS_SECRET=XXX" >> .env
+    $ echo -e "API_KEY=XXX\nAPI_SECRET=XXX\nACCESS_TOKEN=XXX\nACCESS_SECRET=XXX\nMONGODB_DBNAME=XXX" >> .env
     $ set -a; source .env; set +a
 
 __ https://preslav.me/2019/01/09/dotenv-files-python/
@@ -61,7 +64,8 @@ Usage
 -----
 ::
 
-    (venv) $ # Make sure your virtual environment is active first.
+    (venv) $ # Make sure virtual environment is activate
+    (venv) $ # and you have a mongodb instance running
     (venv) $ python bot.py
 
 or to view logs: ::
@@ -71,15 +75,16 @@ or to view logs: ::
 Scheduling
 ----------
 
-You could run this bot at a set time using any scheduler such as `crontab`__, `systemd`__, or `launchd`__. But a dedicated server is highly recommended.
+You could run this bot at a set time using any scheduler such as `crontab`__, `systemd`__, or `launchd`__.
 
-Note: the server must offer a persistent file system so that the database file is not erased (i.e. not `heroku`). `PythonAnywhere`__ or `AWS`__ are solid choices.
+This bot is currently running on heroku with a mongodb `add-on`__ and `clock dyno`__.
+
 
 __ https://www.adminschoice.com/crontab-quick-reference
 __ https://www.freedesktop.org/wiki/Software/systemd/
 __ https://www.google.com/search?q=launchd&ie=utf-8&oe=utf-8&aq=t
-__ https://www.pythonanywhere.com/
-__ https://aws.amazon.com/
+__ https://elements.heroku.com/addons/mongolab
+__ https://devcenter.heroku.com/articles/clock-processes-python
 
 License
 -------
