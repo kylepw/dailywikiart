@@ -64,7 +64,7 @@ Usage
 -----
 ::
 
-    (venv) $ # Make sure virtual environment is activate
+    (venv) $ # Make sure virtual environment is active
     (venv) $ # and you have a mongodb instance running
     (venv) $ python bot.py
 
