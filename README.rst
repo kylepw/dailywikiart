@@ -45,14 +45,16 @@ __ https://iag.me/socialmedia/how-to-create-a-twitter-app-in-8-easy-steps/
         Your access token.
     `ACCESS_SECRET`
         Your access token secret.
-    `MONGODB_DBNAME`
+    `MONGODB_URI`
         Your mongodb URI
+    `MONGODB_DBNAME`
+        Database name
 
     You can use `python-dotenv`__, `pipenv`__, `virtualenv or bash`__ to set the environment variables.
 
     One way to do it (replacing ``XXX``'s with your values): ::
 
-    $ echo -e "API_KEY=XXX\nAPI_SECRET=XXX\nACCESS_TOKEN=XXX\nACCESS_SECRET=XXX\nMONGODB_DBNAME=XXX" >> .env
+    $ echo -e "API_KEY=XXX\nAPI_SECRET=XXX\nACCESS_TOKEN=XXX\nACCESS_SECRET=XXX\nMONGODB_URI=XXX\nMONGODB_DBNAME=XXX" >> .env
     $ set -a; source .env; set +a
 
 __ https://preslav.me/2019/01/09/dotenv-files-python/
