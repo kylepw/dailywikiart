@@ -8,6 +8,6 @@ requests==2.21.0
 requests-oauthlib==1.2.0
 six==1.12.0
 tweepy==3.7.0
-urllib3==1.24.3
+urllib3==1.26.5
 pymongo==3.9.0
 apscheduler==3.6.3
